@@ -1,0 +1,16 @@
+
+Python 3
+
+Pandas library
+
+Numpy library
+
+Pyplot 
+
+Sql workbench
+
+Mysql connector python (8.0.0)
+
+Latest version of streamlit
+
+Statsmodels(0.14.0)
