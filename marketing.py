@@ -12,7 +12,6 @@ warnings.filterwarnings("ignore")
 # ── Page Config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Marketing Campaign Dashboard",
-    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -29,12 +28,12 @@ st.markdown("""
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         text-align: center;
     }
-    .metric-value { font-size: 2rem; font-weight: 700; color: #2563EB; }
+    .metric-value { font-size: 2rem; font-weight: 700; color: #1e293b; }
     .metric-label { font-size: 0.85rem; color: #6b7280; margin-top: 4px; }
     .section-title {
         font-size: 1.3rem; font-weight: 700;
-        color: #1e293b; margin: 1.2rem 0 0.8rem 0;
-        border-left: 4px solid #2563EB;
+        color: #ffffff; margin: 1.2rem 0 0.8rem 0;
+        border-left: 4px solid #1e293b;
         padding-left: 10px;
     }
     .sidebar .sidebar-content { background-color: #1e293b; }
@@ -54,7 +53,7 @@ st.markdown("""
 @st.cache_data
 def load_data():
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    csv_path = os.path.join(base_dir, "Cleaned_marketing_data.csv")
+    csv_path = os.path.join(base_dir, "Final_dataset.csv")
     df = pd.read_csv(csv_path)
 
     # Ensure derived columns exist
@@ -99,44 +98,35 @@ conn    = get_sql_connection(df_full)
 # SIDEBAR — Filters
 # ══════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
-    st.image("https://img.icons8.com/fluency/96/combo-chart.png", width=60)
-    st.title("📊 Dashboard Filters")
+    st.title("Filters")
     st.markdown("---")
 
     # Education
     edu_options = ["All"] + sorted(df_full["Education"].dropna().unique().tolist())
-    selected_edu = st.multiselect("🎓 Education", edu_options, default=["All"])
+    selected_edu = st.multiselect("Education", edu_options, default=["All"])
 
     # Marital Status
     mar_options = ["All"] + sorted(df_full["Marital_Status"].dropna().unique().tolist())
-    selected_mar = st.multiselect("💍 Marital Status", mar_options, default=["All"])
+    selected_mar = st.multiselect("Marital Status", mar_options, default=["All"])
 
     # Country
     cty_options = ["All"] + sorted(df_full["Country"].dropna().unique().tolist())
-    selected_cty = st.multiselect("🌍 Country", cty_options, default=["All"])
+    selected_cty = st.multiselect("Country", cty_options, default=["All"])
 
     # Age Group
     age_order = ["Teen", "Young Adult", "Middle Aged", "Senior", "Elderly"]
     age_options = ["All"] + [a for a in age_order if a in df_full["Age_Group"].unique()]
-    selected_age = st.multiselect("👤 Age Group", age_options, default=["All"])
+    selected_age = st.multiselect("Age Group", age_options, default=["All"])
 
     # Income Group
     inc_order = ["Low", "Lower Middle", "Middle", "Upper Middle", "High"]
     inc_options = ["All"] + [i for i in inc_order if i in df_full["Income_Group"].unique()]
-    selected_inc = st.multiselect("💰 Income Group", inc_options, default=["All"])
-
-    # Income Range Slider
-    st.markdown("---")
-    inc_min = int(df_full["Income"].min())
-    inc_max = int(df_full["Income"].max())
-    income_range = st.slider("💵 Income Range", inc_min, inc_max, (inc_min, inc_max), step=1000)
+    selected_inc = st.multiselect("Income Group", inc_options, default=["All"])
 
     # Response Filter
-    st.markdown("---")
-    response_filter = st.radio("📣 Campaign Response", ["All", "Responded", "Not Responded"])
+    response_filter = st.radio("Campaign Response", ["All", "Responded", "Not Responded"])
 
     st.markdown("---")
-    st.caption("Marketing Campaign Analysis Dashboard")
 
 
 # ── Apply Filters ─────────────────────────────────────────────────────────────
@@ -153,7 +143,7 @@ if "All" not in selected_age and selected_age:
 if "All" not in selected_inc and selected_inc:
     df = df[df["Income_Group"].isin(selected_inc)]
 
-df = df[(df["Income"] >= income_range[0]) & (df["Income"] <= income_range[1])]
+#df = df[(df["Income"] >= income_range[0]) & (df["Income"] <= income_range[1])]
 
 if response_filter == "Responded (1)":
     df = df[df["Response"] == 1]
@@ -168,20 +158,19 @@ df.to_sql("market_data", conn_filtered, index=False, if_exists="replace")
 # ══════════════════════════════════════════════════════════════════════════════
 # HEADER
 # ══════════════════════════════════════════════════════════════════════════════
-st.title("📊 Marketing Campaign Intelligence Dashboard")
-st.markdown("Interactive exploration of customer segments, spending behavior, and campaign performance.")
+st.title("Marketing Campaign Dashboard")
+st.markdown("Interactive exploration of Customer Details")
 st.markdown("---")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB LAYOUT
 # ══════════════════════════════════════════════════════════════════════════════
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4 = st.tabs([
     "KPI Overview",
     "Customer Segments",
     "Campaign Performance",
-    "Channel & Products",
-    "SQL Explorer"
+    "Channel & Products"
 ])
 
 
@@ -191,23 +180,13 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 with tab1:
     st.markdown('<div class="section-title">Key Performance Indicators</div>', unsafe_allow_html=True)
 
-    # KPI Row 1
     k1, k2, k3, k4, k5 = st.columns(5)
-    k1.metric("👥 Total Customers",   f"{len(df):,}")
-    k2.metric("💰 Avg Income",        f"{df['Income'].mean():,.0f}")
-    k3.metric("🛍️ Avg Spending",      f"{df['Total_Amt'].mean():,.0f}")
-    k4.metric("📣 Response Rate",     f"{df['Response'].mean()*100:.2f}%")
-    k5.metric("📦 Avg Purchases",     f"{df['Total_Purchases'].mean():.1f}")
+    k1.metric("Total Customers",   f"{len(df):,}")
+    k2.metric("Avg Income",        f"{df['Income'].mean():,.0f}")
+    k3.metric("Avg Spending",      f"{df['Total_Amt'].mean():,.0f}")
+    k4.metric("Response Rate",     f"{df['Response'].mean()*100:.2f}%")
+    k5.metric("Avg Purchases",     f"{df['Total_Purchases'].mean():.1f}")
 
-    st.markdown("")
-
-    # KPI Row 2
-    k6, k7, k8, k9, k10 = st.columns(5)
-    k6.metric("🍷 Avg Wine Spend",    f"{df['MntWines'].mean():,.0f}")
-    k7.metric("🥩 Avg Meat Spend",    f"{df['MntMeatProducts'].mean():,.0f}")
-    k8.metric("🥇 Avg Gold Spend",    f"{df['MntGoldProds'].mean():,.0f}")
-    k9.metric("🌐 Avg Web Visits",    f"{df['NumWebVisitsMonth'].mean():.1f}")
-    k10.metric("📅 Avg Recency",      f"{df['Recency'].mean():.0f} days")
 
     st.markdown("---")
 
@@ -237,7 +216,7 @@ with tab1:
 
     with col4:
         fig = px.histogram(df, x="Recency", nbins=30, color_discrete_sequence=["#7C3AED"],
-                           title="Recency Distribution (Days since last purchase)")
+                           title="Recency Distribution")
         fig.update_layout(bargap=0.05, plot_bgcolor="#1a1f2e", paper_bgcolor="#1a1f2e")
         st.plotly_chart(fig, use_container_width=True)
 
@@ -306,7 +285,7 @@ with tab2:
     with col5:
         parent_data = df.groupby("Is_Parent")["Total_Amt"].mean().reset_index()
         fig = px.bar(parent_data, x="Is_Parent", y="Total_Amt",
-                     title="Avg Spending: Parent vs Non-Parent",
+                     title="Average Spending",
                      color="Is_Parent",
                      color_discrete_sequence=["#2563EB", "#16A34A"],
                      labels={"Total_Amt": "Avg Spent", "Is_Parent": ""})
@@ -317,7 +296,7 @@ with tab2:
         parent_resp = df.groupby("Is_Parent")["Response"].mean().reset_index()
         parent_resp["Response"] = parent_resp["Response"] * 100
         fig = px.bar(parent_resp, x="Is_Parent", y="Response",
-                     title="Response Rate: Parent vs Non-Parent",
+                     title="Response Rate",
                      color="Is_Parent",
                      color_discrete_sequence=["#EA580C", "#7C3AED"],
                      labels={"Response": "Response Rate (%)", "Is_Parent": ""})
@@ -337,9 +316,9 @@ with tab2:
 
     fig = px.bar(country_data, x="Country", y="Avg_Spent",
                  hover_data=["Total_Customers", "Avg_Income", "Response_Rate"],
-                 title="Avg Spending by Country",
+                 title="Average Spending by Country",
                  color="Avg_Spent", color_continuous_scale="Teal",
-                 labels={"Avg_Spent": "Avg Total Spent"})
+                 labels={"Avg_Spent": "Avg Spent"})
     fig.update_layout(plot_bgcolor="#1a1f2e", paper_bgcolor="#1a1f2e")
     st.plotly_chart(fig, use_container_width=True)
 
@@ -373,7 +352,7 @@ with tab3:
                      title="Total Customers Accepted per Campaign",
                      color="Total_Accepted", color_continuous_scale="Blues",
                      text="Total_Accepted",
-                     labels={"Total_Accepted": "Total Accepted"})
+                     labels={"Total_Accepted": "Total"})
         fig.update_traces(textposition="outside")
         fig.update_layout(plot_bgcolor="#1a1f2e", paper_bgcolor="#1a1f2e")
         st.plotly_chart(fig, use_container_width=True)
@@ -392,7 +371,7 @@ with tab3:
                      title="Response Rate by Education (%)",
                      color="Response", color_continuous_scale="Greens",
                      text=resp_edu["Response"].apply(lambda x: f"{x:.1f}%"),
-                     labels={"Response": "Response Rate (%)"})
+                     labels={"Response": "Response"})
         fig.update_traces(textposition="outside")
         fig.update_layout(plot_bgcolor="#1a1f2e", paper_bgcolor="#1a1f2e")
         st.plotly_chart(fig, use_container_width=True)
@@ -408,7 +387,7 @@ with tab3:
                      title="Response Rate by Income Group (%)",
                      color="Response", color_continuous_scale="Purples",
                      text=resp_inc["Response"].apply(lambda x: f"{x:.1f}%"),
-                     labels={"Response": "Response Rate (%)"})
+                     labels={"Response": "Response"})
         fig.update_traces(textposition="outside")
         fig.update_layout(plot_bgcolor="#1a1f2e", paper_bgcolor="#1a1f2e")
         st.plotly_chart(fig, use_container_width=True)
@@ -434,11 +413,6 @@ with tab3:
                      labels={"Income": "Income", "Response": "Response"})
         fig.update_layout(plot_bgcolor="#1a1f2e", paper_bgcolor="#1a1f2e", showlegend=False)
         st.plotly_chart(fig, use_container_width=True)
-
-    # Campaigns accepted summary table
-    st.markdown('<div class="section-title">Campaign Summary Table</div>', unsafe_allow_html=True)
-    st.dataframe(camp_df.style.format({"Acceptance_Rate": "{:.2f}%", "Total_Accepted": "{:,}"}),
-                 use_container_width=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -556,149 +530,3 @@ with tab4:
     fig.update_layout(plot_bgcolor="#1a1f2e", paper_bgcolor="#1a1f2e")
     st.plotly_chart(fig, use_container_width=True)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# TAB 5 — SQL EXPLORER
-# ══════════════════════════════════════════════════════════════════════════════
-with tab5:
-    st.markdown('<div class="section-title">🔍 Live SQL Query Explorer</div>', unsafe_allow_html=True)
-    st.info("Write any SQL query on the **market_data** table and explore results interactively.")
-
-    # Preset queries
-    preset = st.selectbox("📋 Load a Preset Query", [
-        "Custom Query",
-        "Overall KPIs",
-        "Avg Spending by Education",
-        "Campaign Acceptance Rates",
-        "Response Rate by Income Group",
-        "Top 10 Highest Spenders",
-        "Channel Preference by Age Group",
-        "Spending by Marital Status",
-        "Parent vs Non-Parent Response",
-        "Least Engaged Customers"
-    ])
-
-    preset_queries = {
-        "Overall KPIs": """SELECT 
-    COUNT(*) AS Total_Customers,
-    ROUND(AVG(Income), 2) AS Avg_Income,
-    ROUND(AVG(Total_Amt), 2) AS Avg_Spent,
-    ROUND(AVG(Response) * 100, 2) AS Response_Rate,
-    ROUND(AVG(Recency), 2) AS Avg_Recency,
-    ROUND(AVG(Total_Purchases), 2) AS Avg_Purchases
-FROM market_data""",
-
-        "Avg Spending by Education": """SELECT Education,
-    COUNT(*) AS Total_Customers,
-    ROUND(AVG(Income), 2) AS Avg_Income,
-    ROUND(AVG(Total_Amt), 2) AS Avg_Spent,
-    ROUND(AVG(Response) * 100, 2) AS Response_Rate
-FROM market_data
-GROUP BY Education
-ORDER BY Avg_Spent DESC""",
-
-        "Campaign Acceptance Rates": """SELECT 
-    ROUND(AVG(AcceptedCmp1) * 100, 2) AS Campaign1_Rate,
-    ROUND(AVG(AcceptedCmp2) * 100, 2) AS Campaign2_Rate,
-    ROUND(AVG(AcceptedCmp3) * 100, 2) AS Campaign3_Rate,
-    ROUND(AVG(AcceptedCmp4) * 100, 2) AS Campaign4_Rate,
-    ROUND(AVG(AcceptedCmp5) * 100, 2) AS Campaign5_Rate,
-    ROUND(AVG(Response) * 100, 2) AS Final_Response_Rate
-FROM market_data""",
-
-        "Response Rate by Income Group": """SELECT Income_Group,
-    COUNT(*) AS Total_Customers,
-    SUM(Response) AS Responders,
-    ROUND(AVG(Response) * 100, 2) AS Response_Rate,
-    ROUND(AVG(Total_Amt), 2) AS Avg_Spent
-FROM market_data
-GROUP BY Income_Group
-ORDER BY Response_Rate DESC""",
-
-        "Top 10 Highest Spenders": """SELECT ID, Age, Age_Group, Education, Marital_Status,
-    Income, Income_Group, Total_Amt, Campaigns_Accepted, Response
-FROM market_data
-ORDER BY Total_Amt DESC
-LIMIT 10""",
-
-        "Channel Preference by Age Group": """SELECT Age_Group,
-    ROUND(AVG(NumWebPurchases), 2) AS Avg_Web,
-    ROUND(AVG(NumStorePurchases), 2) AS Avg_Store,
-    ROUND(AVG(NumCatalogPurchases), 2) AS Avg_Catalog,
-    ROUND(AVG(NumDealsPurchases), 2) AS Avg_Deals,
-    ROUND(AVG(Total_Purchases), 2) AS Avg_Total
-FROM market_data
-GROUP BY Age_Group
-ORDER BY Avg_Total DESC""",
-
-        "Spending by Marital Status": """SELECT Marital_Status,
-    COUNT(*) AS Total_Customers,
-    ROUND(AVG(Total_Amt), 2) AS Avg_Spent,
-    ROUND(AVG(Income), 2) AS Avg_Income,
-    ROUND(AVG(Response) * 100, 2) AS Response_Rate
-FROM market_data
-GROUP BY Marital_Status
-ORDER BY Avg_Spent DESC""",
-
-        "Parent vs Non-Parent Response": """SELECT 
-    CASE WHEN Childrens > 0 THEN 'Parent' ELSE 'Non-Parent' END AS Customer_Type,
-    COUNT(*) AS Total_Customers,
-    ROUND(AVG(Total_Amt), 2) AS Avg_Spent,
-    ROUND(AVG(Response) * 100, 2) AS Response_Rate
-FROM market_data
-GROUP BY Customer_Type""",
-
-        "Least Engaged Customers": """SELECT ID, Age, Income, Total_Amt, Recency, Total_Purchases
-FROM market_data
-WHERE Recency > 80 AND Total_Amt < 100
-ORDER BY Recency DESC
-LIMIT 10"""
-    }
-
-    default_query = preset_queries.get(preset, "SELECT * FROM market_data LIMIT 10")
-    query_input = st.text_area("✏️ SQL Query", value=default_query, height=200)
-
-    col_run, col_clear = st.columns([1, 5])
-    with col_run:
-        run_btn = st.button("▶ Run Query", type="primary")
-
-    if run_btn:
-        try:
-            result = run_query(conn_filtered, query_input)
-            st.success(f"✅ Query returned {len(result):,} rows")
-            st.dataframe(result, use_container_width=True)
-
-            # Auto chart if result has 2 columns
-            if len(result.columns) == 2:
-                col_a, col_b = result.columns
-                if result[col_b].dtype in [np.float64, np.int64]:
-                    fig = px.bar(result, x=col_a, y=col_b,
-                                 title=f"{col_b} by {col_a}",
-                                 color=col_b, color_continuous_scale="Blues")
-                    fig.update_layout(plot_bgcolor="white", paper_bgcolor="white")
-                    st.plotly_chart(fig, use_container_width=True)
-
-            # Download button
-            csv = result.to_csv(index=False).encode("utf-8")
-            st.download_button("⬇️ Download Result as CSV", csv,
-                               file_name="query_result.csv", mime="text/csv")
-        except Exception as e:
-            st.error(f"❌ Query Error: {e}")
-
-    # Raw Data Preview
-    st.markdown("---")
-    st.markdown('<div class="section-title">📄 Raw Data Preview</div>', unsafe_allow_html=True)
-    st.caption(f"Showing filtered data: {len(df):,} rows × {df.shape[1]} columns")
-    st.dataframe(df.head(100), use_container_width=True)
-
-    csv_full = df.to_csv(index=False).encode("utf-8")
-    st.download_button("⬇️ Download Filtered Dataset", csv_full,
-                       file_name="filtered_marketing_data.csv", mime="text/csv")
-
-
-# ── Footer ────────────────────────────────────────────────────────────────────
-st.markdown("---")
-st.markdown(
-    "<center><sub>Marketing Campaign Intelligence Dashboard | Built with Streamlit & Plotly</sub></center>",
-    unsafe_allow_html=True
-)

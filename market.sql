@@ -1,13 +1,13 @@
 create database market;
-use market
+use market;
 
 -- 1) Number of customers from each education level:
 SELECT Education,
-       COUNT(*) AS Total,
-       ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM market_data), 2) AS Percentage
+	COUNT(*) AS Total,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM market_data), 2) AS Percentage
 FROM market_data
 GROUP BY Education
-ORDER BY Total_Customers DESC;
+ORDER BY Total DESC;
 
 -- 2) Average Age of customers:
 SELECT 
@@ -107,7 +107,7 @@ GROUP BY Complain;
 -- 12) How many campains customers accepted:
 SELECT 
     CASE 
-        WHEN Campaigns_Accepted = 0 THEN 'Not accepted'
+        WHEN Campaigns_Accepted = 0 THEN 'None'
         WHEN Campaigns_Accepted = 1 THEN 'Once'
         WHEN Campaigns_Accepted = 2 THEN 'Twice'
         ELSE 'Always'
